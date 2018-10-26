@@ -17,6 +17,7 @@
 package org.jivesoftware.openfire.plugin;
 
 import java.io.File;
+import java.text.MessageFormat;
 import java.util.regex.PatternSyntaxException;
 
 import org.jivesoftware.openfire.MessageRouter;
@@ -47,21 +48,34 @@ public class MessageStatePlugin implements Plugin, PacketInterceptor {
 
     private static final Logger Log = LoggerFactory.getLogger(MessageStatePlugin.class);
 
-
+    private InterceptorManager interceptorManager;
 
     public MessageStatePlugin() {
-        System.out.println("the plugin is begin");
+        System.out.println("MessageStatePlugin is instance.");
+        interceptorManager = InterceptorManager.getInstance();
     }
 
  
 
     public void initializePlugin(PluginManager pManager, File pluginDirectory) {
-        
+        System.out.println("messageStatePlugin Directory"+ pluginDirectory.getAbsolutePath());
+        interceptorManager.addInterceptor(this);
     }
 
     @Override
     public void interceptPacket(Packet packet, Session session, boolean b, boolean b1) throws PacketRejectedException {
-
+        if (b1) {
+            Message source = (Message)packet;
+            Message reply = new Message();
+            reply.setID(source.getID());
+            reply.setTo(session.getAddress());
+            reply.setFrom(source.getTo());
+            reply.setType(source.getType());
+            reply.setThread(source.getThread());
+            reply.setBody(MessageFormat.format("msg:{0} send success!",source.toString()));
+            System.out.println(reply.toString());
+//            session.process(reply);
+        }
     }
 
     public void destroyPlugin() {
