@@ -135,6 +135,7 @@
         <module>userservice</module>
         <module>userStatus</module>
         <module>xmldebugger</module>
+        <module>messageState</module>
     </modules>
 
     <organization>
