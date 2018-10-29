@@ -2,11 +2,11 @@
 <plugin>
 
     <!-- Main plugin class -->
-    <class>org.jivesoftware.openfire.plugin.MessageStatePlugin</class>
+    <class>org.jivesoftware.openfire.plugin.MoxiPlugin</class>
     
     <!-- Plugin meta-data -->
-    <name>MessageState</name>
-    <description>send the message state</description>
+    <name>moxiPlugin</name>
+    <description>the specical module for moxi</description>
     <author>vincent</author>
     <version>1.0.0</version>
     <date>10/27/2018</date>

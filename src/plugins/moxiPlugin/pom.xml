@@ -7,10 +7,10 @@
         <version>4.2.3</version>
     </parent>
     <groupId>org.igniterealtime.openfire.plugins</groupId>
-    <artifactId>messageState</artifactId>
+    <artifactId>moxiPlugin</artifactId>
     <version>1.0.0</version>
-    <name>return the message state</name>
-    <description>will return sended message state</description>
+    <name>moxiPlugin</name>
+    <description> the logic for moxi.</description>
 
     <developers>
         <developer>
