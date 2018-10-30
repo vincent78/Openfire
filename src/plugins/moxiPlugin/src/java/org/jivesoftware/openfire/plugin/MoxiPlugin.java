@@ -34,7 +34,7 @@ import java.text.MessageFormat;
 
 /**
  * Content filter plugin.
- * 
+ *
  * @author Conor Hayes
  */
 public class MoxiPlugin implements Plugin, PacketInterceptor {
@@ -48,18 +48,17 @@ public class MoxiPlugin implements Plugin, PacketInterceptor {
         interceptorManager = InterceptorManager.getInstance();
     }
 
- 
 
     public void initializePlugin(PluginManager pManager, File pluginDirectory) {
-        System.out.println("MoxiPlugin Directory"+ pluginDirectory.getAbsolutePath());
+        System.out.println("MoxiPlugin Directory" + pluginDirectory.getAbsolutePath());
         interceptorManager.addInterceptor(this);
     }
 
     @Override
     public void interceptPacket(Packet packet, Session session, boolean b, boolean b1) throws PacketRejectedException {
-        if (b1 && packet instanceof  Message && !isStateMsg((Message) packet)) {
-            Message source = (Message)packet;
-            System.out.println("===" + source.getBody());
+        if (b1 && packet instanceof Message && needSendStateCmd((Message) packet)) {
+            Message source = (Message) packet;
+            System.out.println("=== source:\n" + source.toString());
             Message reply = new Message();
             reply.setID(source.getID());
             reply.setTo(session.getAddress());
@@ -67,8 +66,8 @@ public class MoxiPlugin implements Plugin, PacketInterceptor {
             reply.setType(source.getType());
             reply.setThread(source.getThread());
             reply.setBody(genStateBody(source));
-            System.out.println(reply.toString());
-//            session.process(reply);
+            System.out.println("=== reply:\n" + reply.toString());
+            session.process(reply);
         }
     }
 
@@ -78,36 +77,45 @@ public class MoxiPlugin implements Plugin, PacketInterceptor {
     }
 
 
-    protected Boolean isStateMsg(Message msg) {
+    protected Boolean needSendStateCmd(Message msg) {
         String body = msg.getBody();
-        return body.startsWith("{\"type\":\"cmd\"");
+        if (body == null) {
+            return true;
+        }
+        return !body.startsWith("{\"type\":\"cmd\"");
     }
+
     protected String genStateBody(Message msg) {
 
+        String context = "";
+
+        if (msg.getType() == Message.Type.error) {
+            context = "05" + msg.getID();
+        } else {
+            context = "03" + msg.getID();
+        }
+
         String body = MessageFormat.format("{0}10{1}{2}{3}{4}"
-            ,genRandomNum(2)
-            ,genRandomNum(2)
-            ,getStrLength(msg.getID())
-            ,msg.getID()
-            ,genRandomNum(RandomUtils.nextInt(10)));
-        return MessageFormat.format("{\"type\":\"cmd\",\"data\":\"{0}\"",body);
+            , genRandomNum(2)
+            , genRandomNum(2)
+            , getStrLength(context)
+            , context
+            , genRandomNum(RandomUtils.nextInt(10)));
+        return "{\"type\":\"cmd\",\"data\":\"" + body + "\"}";
     }
 
-    static char[] sourceChars = {'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};
+    static char[] sourceChars = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+
     protected String genRandomNum(int length) {
-        return RandomStringUtils.random(length,sourceChars);
+        return RandomStringUtils.random(length, sourceChars);
     }
 
     protected String getStrLength(String str) {
         int len = str.length();
         String hexStr = Integer.toHexString(len);
-        while(hexStr.length() < 4) {
-            hexStr = "0"+hexStr;
+        while (hexStr.length() < 4) {
+            hexStr = "0" + hexStr;
         }
         return hexStr;
-    }
-
-    public static void main(String[] args) {
-
     }
 }
