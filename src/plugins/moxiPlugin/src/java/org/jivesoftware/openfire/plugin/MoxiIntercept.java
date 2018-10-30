@@ -1,12 +1,11 @@
 package org.jivesoftware.openfire.plugin;
 
 import org.jivesoftware.openfire.session.Session;
-import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
-public interface MessageState {
+public interface MoxiIntercept {
 
-    boolean isState(Message msg);
+    boolean isCatch(Packet msg);
 
     void before(Packet packet, Session session, boolean read);
 
