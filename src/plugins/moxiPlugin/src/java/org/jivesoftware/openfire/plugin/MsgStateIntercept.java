@@ -7,6 +7,7 @@ import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
 import java.text.MessageFormat;
+import java.util.UUID;
 
 public class MsgStateIntercept implements MoxiIntercept {
     @Override
@@ -25,10 +26,10 @@ public class MsgStateIntercept implements MoxiIntercept {
             Message source = (Message) packet;
             System.out.println("=== source:\n" + source.toString());
             Message reply = new Message();
-            reply.setID(source.getID());
+            reply.setID(UUID.randomUUID().toString());
             reply.setTo(session.getAddress());
             reply.setFrom(source.getTo());
-            reply.setType(source.getType());
+            reply.setType(Message.Type.chat);
             reply.setThread(source.getThread());
             reply.setBody(genStateBody(source));
             System.out.println("=== reply:\n" + reply.toString());
@@ -37,12 +38,10 @@ public class MsgStateIntercept implements MoxiIntercept {
     }
 
 
-
-
     protected String genStateBody(Packet param) {
-        if (param instanceof  Message) {
+        if (param instanceof Message) {
             Message msg = (Message) param;
-            String context = "";
+            String context;
             if (msg.getType() == Message.Type.error) {
                 context = "05" + msg.getID();
             } else {
@@ -77,6 +76,10 @@ public class MsgStateIntercept implements MoxiIntercept {
 
 
     protected Boolean needSendStateCmd(Packet param) {
+        if (param.getFrom().equals(param.getTo())) {
+            return false;
+        }
+
         if (param instanceof Message) {
             Message msg = (Message) param;
             String body = msg.getBody();

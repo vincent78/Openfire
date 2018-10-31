@@ -8,8 +8,8 @@
     <name>moxiPlugin</name>
     <description>the specical module for moxi</description>
     <author>vincent</author>
-    <version>1.0.0</version>
-    <date>10/27/2018</date>
+    <version>1.0.1</version>
+    <date>10/31/2018</date>
     <minServerVersion>4.0.0</minServerVersion>
     
     

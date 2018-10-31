@@ -76,6 +76,7 @@ public class MoxiPlugin implements Plugin, PacketInterceptor {
 
     public void destroyPlugin() {
         // unregister with interceptor manager
-//        interceptorManager.removeInterceptor(this);
+        interceptorManager.removeInterceptor(this);
+        intercepts.clear();
     }
 }
