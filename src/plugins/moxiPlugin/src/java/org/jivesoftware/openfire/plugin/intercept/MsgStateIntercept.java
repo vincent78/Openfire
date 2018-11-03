@@ -1,7 +1,8 @@
-package org.jivesoftware.openfire.plugin;
+package org.jivesoftware.openfire.plugin.intercept;
 
 import org.apache.commons.lang.RandomStringUtils;
 import org.apache.commons.lang.math.RandomUtils;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.session.Session;
 import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
@@ -33,7 +34,7 @@ public class MsgStateIntercept implements MoxiIntercept {
             reply.setThread(source.getThread());
             reply.setBody(genStateBody(source));
             System.out.println("=== reply:\n" + reply.toString());
-            session.process(reply);
+            XMPPServer.getInstance().getMessageRouter().route(reply);
         }
     }
 

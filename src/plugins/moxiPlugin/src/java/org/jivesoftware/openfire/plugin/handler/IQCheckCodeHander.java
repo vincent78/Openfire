@@ -1,0 +1,51 @@
+package org.jivesoftware.openfire.plugin.handler;
+
+import org.jivesoftware.openfire.IQHandlerInfo;
+import org.jivesoftware.openfire.PacketException;
+import org.jivesoftware.openfire.XMPPServer;
+import org.jivesoftware.openfire.auth.UnauthorizedException;
+import org.jivesoftware.openfire.handler.IQHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.xmpp.packet.IQ;
+import org.xmpp.packet.Packet;
+
+public class IQCheckCodeHander extends IQHandler {
+
+    private static final Logger Log = LoggerFactory.getLogger(IQCheckCodeHander.class);
+
+    public static final String NAMESPACE = "jabber:iq:checkcode";
+    private String serverName;
+    private final IQHandlerInfo info;
+
+    public IQCheckCodeHander(String moduleName) {
+        super(moduleName);
+        info = new IQHandlerInfo("checkcode", NAMESPACE);
+    }
+
+    @Override
+    public void process(Packet packet) throws PacketException {
+        super.process(packet);
+        Log.debug("IQCheckCodeHander process:" + packet.toXML());
+
+    }
+
+    @Override
+    public void initialize(XMPPServer server) {
+        super.initialize(server);
+        serverName = server.getServerInfo().getXMPPDomain();
+        Log.debug("IQCheckCodeHander initialize:" + serverName);
+    }
+
+    @Override
+    public IQ handleIQ(IQ iq) throws UnauthorizedException {
+        return null;
+    }
+
+    @Override
+    public IQHandlerInfo getInfo() {
+        return info;
+    }
+
+
+}

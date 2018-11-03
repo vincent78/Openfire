@@ -16,21 +16,21 @@
 
 package org.jivesoftware.openfire.plugin;
 
-import org.apache.commons.lang.RandomStringUtils;
-import org.apache.commons.lang.math.RandomUtils;
+import org.jivesoftware.openfire.XMPPServer;
 import org.jivesoftware.openfire.container.Plugin;
 import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.openfire.plugin.handler.IQCheckCodeHander;
+import org.jivesoftware.openfire.plugin.intercept.MoxiIntercept;
+import org.jivesoftware.openfire.plugin.intercept.MsgStateIntercept;
 import org.jivesoftware.openfire.session.Session;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.Message;
 import org.xmpp.packet.Packet;
 
 import java.io.File;
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,9 +50,13 @@ public class MoxiPlugin implements Plugin, PacketInterceptor {
     public MoxiPlugin() {
         System.out.println("MoxiPlugin is instance.");
         interceptorManager = InterceptorManager.getInstance();
+
         intercepts = new ArrayList<>();
 
         intercepts.add(new MsgStateIntercept());
+
+        XMPPServer.getInstance().getIQRouter().addHandler(new IQCheckCodeHander("apply the checkCode by MobileNumber"));
+        System.out.println("MoxiPlugin add the checkCodeHandler");
     }
 
 
