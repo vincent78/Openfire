@@ -18,11 +18,6 @@ package org.jivesoftware.openfire.handler;
 
 import gnu.inet.encoding.Stringprep;
 import gnu.inet.encoding.StringprepException;
-
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.QName;
@@ -40,6 +35,8 @@ import org.jivesoftware.openfire.user.UserAlreadyExistsException;
 import org.jivesoftware.openfire.user.UserManager;
 import org.jivesoftware.openfire.user.UserNotFoundException;
 import org.jivesoftware.util.JiveGlobals;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.forms.DataForm;
@@ -48,6 +45,8 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.PacketError;
 import org.xmpp.packet.StreamError;
+
+import java.util.*;
 
 /**
  * Implements the TYPE_IQ jabber:iq:register protocol (plain only). Clients
@@ -125,7 +124,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             fieldUser.setLabel("Username");
             fieldUser.setRequired(true);
 
-            final FormField fieldName = registrationForm.addField(); 
+            final FormField fieldName = registrationForm.addField();
             fieldName.setVariable("name");
             fieldName.setType(FormField.Type.text_single);
             fieldName.setLabel("Full name");
@@ -150,10 +149,10 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
             // Add the registration form to the probe result.
             probeResult.add(registrationForm.getElement());
         }
-        
+
         JiveGlobals.migrateProperty("register.inband");
         JiveGlobals.migrateProperty("register.password");
-        
+
         // See if in-band registration should be enabled (default is true).
         registrationEnabled = JiveGlobals.getBooleanProperty("register.inband", true);
         // See if users can change their passwords (default is true).
@@ -167,9 +166,9 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         // If no session was found then answer an error (if possible)
         if (session == null) {
             Log.error("Error during registration. Session not found in " +
-                    sessionManager.getPreAuthenticatedKeys() +
-                    " for key " +
-                    packet.getFrom());
+                sessionManager.getPreAuthenticatedKeys() +
+                " for key " +
+                packet.getFrom());
             // This error packet will probably won't make it through
             reply = IQ.createResultIQ(packet);
             reply.setChildElement(packet.getChildElement().createCopy());
@@ -182,8 +181,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                 reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.forbidden);
-            }
-            else {
+            } else {
                 reply = IQ.createResultIQ(packet);
                 if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
                     try {
@@ -193,7 +191,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         currentRegistration.element("username").setText(user.getUsername());
                         currentRegistration.element("password").setText("");
                         currentRegistration.element("email")
-                                .setText(user.getEmail() == null ? "" : user.getEmail());
+                                           .setText(user.getEmail() == null ? "" : user.getEmail());
                         currentRegistration.element("name").setText(user.getName());
 
                         Element form = currentRegistration.element(QName.get("x", "jabber:x:data"));
@@ -203,22 +201,18 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             field = (Element) fields.next();
                             if ("username".equals(field.attributeValue("var"))) {
                                 field.addElement("value").addText(user.getUsername());
-                            }
-                            else if ("name".equals(field.attributeValue("var"))) {
+                            } else if ("name".equals(field.attributeValue("var"))) {
                                 field.addElement("value").addText(user.getName());
-                            }
-                            else if ("email".equals(field.attributeValue("var"))) {
+                            } else if ("email".equals(field.attributeValue("var"))) {
                                 field.addElement("value")
-                                        .addText(user.getEmail() == null ? "" : user.getEmail());
+                                     .addText(user.getEmail() == null ? "" : user.getEmail());
                             }
                         }
                         reply.setChildElement(currentRegistration);
-                    }
-                    catch (UserNotFoundException e) {
+                    } catch (UserNotFoundException e) {
                         reply.setChildElement(probeResult.createCopy());
                     }
-                }
-                else {
+                } else {
                     // This is a workaround. Since we don't want to have an incorrect TO attribute
                     // value we need to clean up the TO attribute. The TO attribute will contain an
                     // incorrect value since we are setting a fake JID until the user actually
@@ -227,8 +221,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     reply.setChildElement(probeResult.createCopy());
                 }
             }
-        }
-        else if (IQ.Type.set.equals(packet.getType())) {
+        } else if (IQ.Type.set.equals(packet.getType())) {
             try {
                 Element iqElement = packet.getChildElement();
                 if (iqElement.element("remove") != null) {
@@ -237,8 +230,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         reply = IQ.createResultIQ(packet);
                         reply.setChildElement(packet.getChildElement().createCopy());
                         reply.setError(PacketError.Condition.forbidden);
-                    }
-                    else {
+                    } else {
                         if (session.getStatus() == Session.STATUS_AUTHENTICATED) {
                             User user = userManager.getUser(session.getUsername());
                             // Delete the user
@@ -254,20 +246,17 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             Thread.sleep(10);
                             // Close the user's connection
                             final StreamError error = new StreamError(StreamError.Condition.not_authorized);
-                            for (ClientSession sess : sessionManager.getSessions(user.getUsername()) )
-                            {
+                            for (ClientSession sess : sessionManager.getSessions(user.getUsername())) {
                                 sess.deliverRawText(error.toXML());
                                 sess.close();
                             }
                             // The reply has been sent so clean up the variable
                             reply = null;
-                        }
-                        else {
+                        } else {
                             throw new UnauthorizedException();
                         }
                     }
-                }
-                else {
+                } else {
                     String username;
                     String password = null;
                     String email = null;
@@ -302,13 +291,18 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             values = field.getValues();
                             name = (!values.isEmpty() ? values.get(0) : " ");
                         }
-                    }
-                    else {
+                    } else {
                         // Get the registration info from the query elements
                         username = iqElement.elementText("username");
                         password = iqElement.elementText("password");
                         email = iqElement.elementText("email");
                         name = iqElement.elementText("name");
+
+                        if (!checkCode(iqElement)) {
+                            throw new IllegalArgumentException("验证码不正确。");
+                        }
+
+
                     }
                     if (email != null && email.matches("\\s*")) {
                         email = null;
@@ -316,7 +310,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                     if (name != null && name.matches("\\s*")) {
                         name = null;
                     }
-                    
+
                     // So that we can set a more informative error message back, lets test this for
                     // stringprep validity now.
                     if (username != null) {
@@ -327,8 +321,8 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                         // Flag that indicates if the user is *only* changing his password
                         boolean onlyPassword = false;
                         if (iqElement.elements().size() == 2 &&
-                                iqElement.element("username") != null &&
-                                iqElement.element("password") != null) {
+                            iqElement.element("username") != null &&
+                            iqElement.element("password") != null) {
                             onlyPassword = true;
                         }
                         // If users are not allowed to change their password, return an error.
@@ -344,8 +338,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             reply.setChildElement(packet.getChildElement().createCopy());
                             reply.setError(PacketError.Condition.forbidden);
                             return reply;
-                        }
-                        else {
+                        } else {
                             User user = userManager.getUser(session.getUsername());
                             if (user.getUsername().equalsIgnoreCase(username)) {
                                 if (password != null && password.trim().length() > 0) {
@@ -355,12 +348,10 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                                     user.setEmail(email);
                                 }
                                 newUser = user;
-                            }
-                            else if (password != null && password.trim().length() > 0) {
+                            } else if (password != null && password.trim().length() > 0) {
                                 // An admin can create new accounts when logged in.
                                 newUser = userManager.createUser(username, password, null, email);
-                            }
-                            else {
+                            } else {
                                 // Deny registration of users with no password
                                 reply = IQ.createResultIQ(packet);
                                 reply.setChildElement(packet.getChildElement().createCopy());
@@ -368,8 +359,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                                 return reply;
                             }
                         }
-                    }
-                    else {
+                    } else {
                         // If inband registration is not allowed, return an error.
                         if (!registrationEnabled) {
                             reply = IQ.createResultIQ(packet);
@@ -384,8 +374,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
                             reply.setChildElement(packet.getChildElement().createCopy());
                             reply.setError(PacketError.Condition.not_acceptable);
                             return reply;
-                        }
-                        else {
+                        } else {
                             // Create the new account
                             newUser = userManager.createUser(username, password, name, email);
                         }
@@ -397,37 +386,31 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
 
                     reply = IQ.createResultIQ(packet);
                 }
-            }
-            catch (UserAlreadyExistsException e) {
+            } catch (UserAlreadyExistsException e) {
                 reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.conflict);
-            }
-            catch (UserNotFoundException e) {
+            } catch (UserNotFoundException e) {
                 reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.bad_request);
-            }
-            catch (StringprepException e) {
+            } catch (StringprepException e) {
                 // The specified username is not correct according to the stringprep specs
                 reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.jid_malformed);
-            }
-            catch (IllegalArgumentException e) {
+            } catch (IllegalArgumentException e) {
                 // At least one of the fields passed in is not valid
                 reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.not_acceptable);
                 Log.warn(e.getMessage(), e);
-            }
-            catch (UnsupportedOperationException e) {
+            } catch (UnsupportedOperationException e) {
                 // The User provider is read-only so this operation is not allowed
                 reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
                 reply.setError(PacketError.Condition.not_allowed);
-            }
-            catch (Exception e) {
+            } catch (Exception e) {
                 // Some unexpected error happened so return an internal_server_error
                 reply = IQ.createResultIQ(packet);
                 reply.setChildElement(packet.getChildElement().createCopy());
@@ -442,31 +425,25 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
         return null;
     }
 
-    public boolean isInbandRegEnabled()
-    {
+    public boolean isInbandRegEnabled() {
         return registrationEnabled && !UserManager.getUserProvider().isReadOnly();
     }
 
-    public void setInbandRegEnabled(boolean allowed)
-    {
-        if ( allowed && UserManager.getUserProvider().isReadOnly() )
-        {
-            Log.warn( "Enabling in-band registration has no effect, as the user provider for this system is read-only." );
+    public void setInbandRegEnabled(boolean allowed) {
+        if (allowed && UserManager.getUserProvider().isReadOnly()) {
+            Log.warn("Enabling in-band registration has no effect, as the user provider for this system is read-only.");
         }
         registrationEnabled = allowed;
         JiveGlobals.setProperty("register.inband", registrationEnabled ? "true" : "false");
     }
 
-    public boolean canChangePassword()
-    {
+    public boolean canChangePassword() {
         return canChangePassword && !UserManager.getUserProvider().isReadOnly();
     }
 
-    public void setCanChangePassword(boolean allowed)
-    {
-        if ( allowed && UserManager.getUserProvider().isReadOnly() )
-        {
-            Log.warn( "Allowing password changes has no effect, as the user provider for this system is read-only." );
+    public void setCanChangePassword(boolean allowed) {
+        if (allowed && UserManager.getUserProvider().isReadOnly()) {
+            Log.warn("Allowing password changes has no effect, as the user provider for this system is read-only.");
         }
         canChangePassword = allowed;
         JiveGlobals.setProperty("register.password", canChangePassword ? "true" : "false");
@@ -481,4 +458,42 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
     public Iterator<String> getFeatures() {
         return Collections.singleton("jabber:iq:register").iterator();
     }
+
+    public boolean checkCode(Element iqElement) {
+        String mobileNumber = iqElement.elementTextTrim("mobileNumber");
+        String checkCode = iqElement.elementTextTrim("checkCode");
+        return validateCode(mobileNumber, checkCode);
+    }
+
+    public static  Map<String,String> checkCodeMap = new HashMap<>();
+
+    public static boolean validateCode(String mobile, String code) {
+        Cache<String,String> cache = getMoxiCache();
+
+        if (cache == null || mobile == null || mobile.length() == 0
+            || code == null || code.length() == 0) {
+            return false;
+        }
+
+        String result = cache.get(mobile);
+        if (result == null || !result.equals(code)) {
+            return false;
+        } else {
+            cache.remove(mobile);
+            return true;
+        }
+    }
+
+    public static Cache<String,String> getMoxiCache() {
+        Cache[] caches = CacheFactory.getAllCaches();
+
+        for (int i=0;i<caches.length;i++) {
+            Cache tmp = caches[i];
+            if (tmp != null && tmp.getName().equals("cache.moxiPluginCache")) {
+                return (Cache<String,String>) tmp;
+            }
+        }
+        return null;
+    }
+
 }
