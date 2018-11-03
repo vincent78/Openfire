@@ -108,6 +108,7 @@ public class IQRouter extends BasicModule {
                     childElement != null && isLocalServer(to) && (
                         "jabber:iq:auth".equals(childElement.getNamespaceURI()) ||
                         "jabber:iq:register".equals(childElement.getNamespaceURI()) ||
+                        "jabber:iq:checkcode".equals(childElement.getNamespaceURI()) ||
                         "urn:ietf:params:xml:ns:xmpp-bind".equals(childElement.getNamespaceURI())))) {
                 handle(packet);
             } else if (packet.getType() == IQ.Type.get || packet.getType() == IQ.Type.set) {
