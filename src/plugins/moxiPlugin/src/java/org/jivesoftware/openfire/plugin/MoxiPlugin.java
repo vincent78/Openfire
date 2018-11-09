@@ -23,6 +23,7 @@ import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
 import org.jivesoftware.openfire.plugin.handler.IQCheckCodeHander;
+import org.jivesoftware.openfire.plugin.handler.IQSetPublicKeyHandler;
 import org.jivesoftware.openfire.plugin.intercept.MoxiIntercept;
 import org.jivesoftware.openfire.plugin.intercept.MsgStateIntercept;
 import org.jivesoftware.openfire.session.Session;
@@ -47,6 +48,10 @@ public class MoxiPlugin implements Plugin, PacketInterceptor {
 
     private List<MoxiIntercept> intercepts;
 
+    private IQCheckCodeHander checkCodeHandler;
+
+    private IQSetPublicKeyHandler publicKeyHandler;
+
     public MoxiPlugin() {
         System.out.println("MoxiPlugin is instance.");
         interceptorManager = InterceptorManager.getInstance();
@@ -55,7 +60,13 @@ public class MoxiPlugin implements Plugin, PacketInterceptor {
 
         intercepts.add(new MsgStateIntercept());
 
-        XMPPServer.getInstance().getIQRouter().addHandler(new IQCheckCodeHander("apply the checkCode by MobileNumber"));
+        checkCodeHandler = new IQCheckCodeHander("apply the checkCode by MobileNumber");
+        XMPPServer.getInstance().getIQRouter().addHandler(checkCodeHandler);
+
+        publicKeyHandler = new IQSetPublicKeyHandler("send the public key from client.");
+        XMPPServer.getInstance().getIQRouter().addHandler(publicKeyHandler);
+
+
         System.out.println("MoxiPlugin add the checkCodeHandler");
     }
 
@@ -82,5 +93,11 @@ public class MoxiPlugin implements Plugin, PacketInterceptor {
         // unregister with interceptor manager
         interceptorManager.removeInterceptor(this);
         intercepts.clear();
+
+        if ( checkCodeHandler != null )
+        {
+            XMPPServer.getInstance().getIQRouter().removeHandler( checkCodeHandler );
+            checkCodeHandler = null;
+        }
     }
 }

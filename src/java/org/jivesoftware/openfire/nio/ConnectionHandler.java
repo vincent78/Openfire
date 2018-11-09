@@ -16,8 +16,6 @@
 
 package org.jivesoftware.openfire.nio;
 
-import org.apache.mina.core.buffer.AbstractIoBuffer;
-import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.service.IoHandlerAdapter;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
@@ -33,9 +31,7 @@ import org.xmlpull.v1.XmlPullParserException;
 import org.xmlpull.v1.XmlPullParserFactory;
 import org.xmpp.packet.StreamError;
 
-import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -169,7 +165,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
     public void messageReceived(IoSession session, Object message) throws Exception {
         // Get the stanza handler for this session
         StanzaHandler handler = (StanzaHandler) session.getAttribute(HANDLER);
-        // Get the parser to use to process stanza. For optimization there is going
+        // Get the parser to use to process stanza. For optimization there is goingIQSessionEstablishmentHandler
         // to be a parser for each running thread. Each Filter will be executed
         // by the Executor placed as the first Filter. So we can have a parser associated
         // to each Thread
@@ -195,9 +191,7 @@ public abstract class ConnectionHandler extends IoHandlerAdapter {
         super.messageSent(session, message);
         // Update counter of written btyes
         updateWrittenBytesCounter(session);
-        AbstractIoBuffer buf = (AbstractIoBuffer) message;
-
-        System.out.println("SENT: " + buf.getString(Charset.forName("UTF-8").newDecoder()));
+//        System.out.println("SENT: " + Charset.forName("UTF-8").decode(((ByteBuffer)message).buf()));
     }
 
     abstract NIOConnection createNIOConnection(IoSession session);

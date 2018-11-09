@@ -485,15 +485,7 @@ public class IQRegisterHandler extends IQHandler implements ServerFeaturesProvid
     }
 
     public static Cache<String,String> getMoxiCache() {
-        Cache[] caches = CacheFactory.getAllCaches();
-
-        for (int i=0;i<caches.length;i++) {
-            Cache tmp = caches[i];
-            if (tmp != null && tmp.getName().equals("cache.moxiPluginCache")) {
-                return (Cache<String,String>) tmp;
-            }
-        }
-        return null;
+        return CacheFactory.createCache("cache.moxiPluginCache");
     }
 
 }

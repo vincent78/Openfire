@@ -9,6 +9,9 @@ import org.jivesoftware.openfire.auth.UnauthorizedException;
 import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.plugin.utils.SMSUtil;
 import org.jivesoftware.openfire.session.ClientSession;
+import org.jivesoftware.openfire.user.User;
+import org.jivesoftware.util.cache.Cache;
+import org.jivesoftware.util.cache.CacheFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xmpp.packet.IQ;
@@ -36,6 +39,10 @@ public class IQCheckCodeHander extends IQHandler {
         try{
             String mobile = mobileElement.element("query").element("mobileNumber").getTextTrim();
             String result = SMSUtil.send(mobile);
+            if (result.startsWith("000/")) {
+                changePwdWhenLogin(packet);
+            }
+
             IQ reply = IQ.createResultIQ((IQ) packet);
             reply.setTo((JID) null);
             Element childElement = ((IQ) packet).getChildElement().createCopy();
@@ -50,6 +57,34 @@ public class IQCheckCodeHander extends IQHandler {
             }
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    public void changePwdWhenLogin(Packet packet) {
+        Element mobileElement = packet.getElement();
+        String mobile = mobileElement.element("query").element("mobileNumber").getTextTrim();
+        Boolean isLogining = false;
+        for (Element e :mobileElement.element("query").elements()) {
+            if ("type".equalsIgnoreCase(e.getName()) && "login".equalsIgnoreCase(e.getTextTrim())) {
+                isLogining = true;
+            }
+        }
+
+        if (isLogining) {
+            try {
+                User user = XMPPServer.getInstance().getUserManager().getUser(mobile);
+                if (user != null) {
+                    Cache<String,String> cache = CacheFactory.createCache("cache.moxiPluginCache");
+                    if (cache != null) {
+                        String code = cache.get(mobile);
+                        if (code != null && code.length() > 0) {
+                            user.setPassword(code);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
