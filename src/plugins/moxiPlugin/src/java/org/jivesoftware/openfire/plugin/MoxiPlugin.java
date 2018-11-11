@@ -22,6 +22,8 @@ import org.jivesoftware.openfire.container.PluginManager;
 import org.jivesoftware.openfire.interceptor.InterceptorManager;
 import org.jivesoftware.openfire.interceptor.PacketInterceptor;
 import org.jivesoftware.openfire.interceptor.PacketRejectedException;
+import org.jivesoftware.openfire.plugin.handler.IQGetPublicKeyHandler;
+import org.jivesoftware.openfire.plugin.handler.IQMatchFriendHandler;
 import org.jivesoftware.openfire.plugin.handler.IQCheckCodeHander;
 import org.jivesoftware.openfire.plugin.handler.IQSetPublicKeyHandler;
 import org.jivesoftware.openfire.plugin.intercept.MoxiIntercept;
@@ -50,7 +52,10 @@ public class MoxiPlugin implements Plugin, PacketInterceptor {
 
     private IQCheckCodeHander checkCodeHandler;
 
-    private IQSetPublicKeyHandler publicKeyHandler;
+    private IQSetPublicKeyHandler setPublicKeyHandler;
+    private IQGetPublicKeyHandler getPublicKeyHandler;
+
+    private IQMatchFriendHandler matchFriendHandler;
 
     public MoxiPlugin() {
         System.out.println("MoxiPlugin is instance.");
@@ -63,9 +68,13 @@ public class MoxiPlugin implements Plugin, PacketInterceptor {
         checkCodeHandler = new IQCheckCodeHander("apply the checkCode by MobileNumber");
         XMPPServer.getInstance().getIQRouter().addHandler(checkCodeHandler);
 
-        publicKeyHandler = new IQSetPublicKeyHandler("send the public key from client.");
-        XMPPServer.getInstance().getIQRouter().addHandler(publicKeyHandler);
+        setPublicKeyHandler = new IQSetPublicKeyHandler("send the public key from client.");
+        XMPPServer.getInstance().getIQRouter().addHandler(setPublicKeyHandler);
+        getPublicKeyHandler = new IQGetPublicKeyHandler("get the publickey from server.");
+        XMPPServer.getInstance().getIQRouter().addHandler(getPublicKeyHandler);
 
+        matchFriendHandler = new IQMatchFriendHandler("match the friend from input.");
+        XMPPServer.getInstance().getIQRouter().addHandler(matchFriendHandler);
 
         System.out.println("MoxiPlugin add the checkCodeHandler");
     }

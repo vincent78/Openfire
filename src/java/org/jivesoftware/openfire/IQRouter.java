@@ -111,6 +111,7 @@ public class IQRouter extends BasicModule {
                         "jabber:iq:checkcode".equals(childElement.getNamespaceURI()) ||
                         "jabber:iq:setpublickey".equals(childElement.getNamespaceURI()) ||
                         "jabber:iq:getpublickey".equals(childElement.getNamespaceURI()) ||
+                        "jabber:iq:matchfriend".equals(childElement.getNamespaceURI()) ||
                         "urn:ietf:params:xml:ns:xmpp-bind".equals(childElement.getNamespaceURI())))) {
                 handle(packet);
             } else if (packet.getType() == IQ.Type.get || packet.getType() == IQ.Type.set) {

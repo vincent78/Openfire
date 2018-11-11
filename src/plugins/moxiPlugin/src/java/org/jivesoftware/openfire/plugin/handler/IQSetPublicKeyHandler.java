@@ -5,8 +5,6 @@ import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.auth.UnauthorizedException;
-import org.jivesoftware.openfire.handler.IQHandler;
 import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
@@ -16,11 +14,10 @@ import org.xmpp.packet.IQ;
 import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
-public class IQSetPublicKeyHandler extends IQHandler {
+public class IQSetPublicKeyHandler extends IQMoxiBaseHandler {
 
     private static final Logger Log = LoggerFactory.getLogger(IQSetPublicKeyHandler.class);
     public static final String NAMESPACE = "jabber:iq:setpublickey";
-    private String serverName;
     private final IQHandlerInfo info;
 
 
@@ -35,7 +32,7 @@ public class IQSetPublicKeyHandler extends IQHandler {
         Log.debug("IQSetPublicKeyHandler process:" + packet.toXML());
         Element publicKeyElement = packet.getElement();
         try{
-            String result = "false";
+            String result;
             String publickey = publicKeyElement.element("query").element("publickey").getTextTrim();
             UserManager userManager = XMPPServer.getInstance().getUserManager();
             ClientSession session = sessionManager.getSession(packet.getFrom());
@@ -65,17 +62,8 @@ public class IQSetPublicKeyHandler extends IQHandler {
         }
     }
 
-    @Override
-    public void initialize(XMPPServer server) {
-        super.initialize(server);
-        serverName = server.getServerInfo().getXMPPDomain();
 
-    }
 
-    @Override
-    public IQ handleIQ(IQ iq) throws UnauthorizedException {
-        return null;
-    }
 
     @Override
     public IQHandlerInfo getInfo() {
