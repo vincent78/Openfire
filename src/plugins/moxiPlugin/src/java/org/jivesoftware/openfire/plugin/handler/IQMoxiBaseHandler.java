@@ -29,9 +29,12 @@ public abstract class IQMoxiBaseHandler extends IQHandler {
         reply.setChildElement(childElement);
         if (reply != null && session != null) {
             // why is this done here instead of letting the iq handler do it?
-            session.process(reply);
+//            session.process(reply);
+            XMPPServer.getInstance().getIQRouter().route(reply);
         }
     }
+
+
 
     @Override
     public IQ handleIQ(IQ iq) throws UnauthorizedException {

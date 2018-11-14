@@ -4,7 +4,6 @@ import org.dom4j.Element;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.XMPPServer;
-import org.jivesoftware.openfire.session.ClientSession;
 import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.slf4j.Logger;
