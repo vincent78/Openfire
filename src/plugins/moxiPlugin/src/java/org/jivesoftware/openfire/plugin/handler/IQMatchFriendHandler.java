@@ -18,6 +18,7 @@ import org.xmpp.packet.Packet;
 import org.xmpp.packet.Presence;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class IQMatchFriendHandler extends IQMoxiBaseHandler {
 
@@ -48,7 +49,19 @@ public class IQMatchFriendHandler extends IQMoxiBaseHandler {
         try {
             Element mobileElement = packet.getElement();
             String mobiles = mobileElement.element("query").element("mobileNumbers").getTextTrim();
-            HashSet<String> clientApply2Friend = new HashSet(Arrays.asList(mobiles.split(",")));
+            HashSet<String> temp = new HashSet(Arrays.asList(mobiles.split(",")));
+            HashSet<String> clientApply2Friend = new HashSet();
+            Iterator<String> it = temp.iterator();
+            while(it.hasNext()) {
+                String input = it.next();
+                if (input.indexOf("%%") >= 0) {
+                    clientApply2Friend.add(input.substring(0,input.indexOf("%%")));
+                } else {
+                    clientApply2Friend.add(input);
+                }
+            }
+
+
             if (mobiles == null || mobiles.length() == 0) {
                 replyMsg(packet, "the input mobiles is null");
             } else {
@@ -93,15 +106,31 @@ public class IQMatchFriendHandler extends IQMoxiBaseHandler {
 
     public void addFriends(Packet packet, Set<String> users) throws PacketException {
         System.out.println("addFriends has invoked.");
-        String toDomain = packet.getTo().getDomain();
+
+        Element mobileElement = packet.getElement();
+        String mobiles = mobileElement.element("query").element("mobileNumbers").getTextTrim();
+        ConcurrentHashMap<String, String> inputMap = new ConcurrentHashMap<>();
+        String[] inputs = mobiles.split(",");
+
         if (users != null && !users.isEmpty()) {
             for (String userName : users) {
-                addFriend(packet, userName);
+                String nick = userName;
+                for (int i=0;i<inputs.length;i++) {
+                    String input = inputs[i];
+                    if (input.startsWith(userName)) {
+                        int position = input.indexOf("%%");
+                        if (position >= 0) {
+                            nick = input.substring(position + 2);
+                        }
+                        break;
+                    }
+                }
+                addFriend(packet, userName,nick);
             }
         }
     }
 
-    public void addFriend(Packet packet, String toUserName) throws PacketException {
+    public void addFriend(Packet packet, String toUserName,String nick) throws PacketException {
         System.out.println("addFriend:" + toUserName);
         String serverName = XMPPServer.getInstance().getServerInfo().getXMPPDomain();
         String toDomain = packet.getTo().getDomain();
@@ -125,8 +154,8 @@ public class IQMatchFriendHandler extends IQMoxiBaseHandler {
             if (name.indexOf("@") <= 0) {
                 name = name + "@" + toDomain;
             }
-            addRosterItem(packet.getFrom().getNode(), new JID(name));
-            addRosterItem(toUserName, packet.getFrom());
+            addRosterItem(packet.getFrom().getNode(), new JID(name),nick);
+            addRosterItem(toUserName, packet.getFrom(),null);
 
 
             // 缓存的刷新尤其重要，不然，只有重启服务器，你才能看到两个好友之间才是真正的订阅关系的！
@@ -144,7 +173,7 @@ public class IQMatchFriendHandler extends IQMoxiBaseHandler {
         }
     }
 
-    protected void addRosterItem(String userName, JID jid) {
+    protected void addRosterItem(String userName, JID jid,String nick) {
 
         boolean alreadyFriend = false;
         try {
@@ -176,6 +205,11 @@ public class IQMatchFriendHandler extends IQMoxiBaseHandler {
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+        if (nick != null && nick.length() >= 0 ) {
+            nickName = nick;
+        }
+
         // 添加一个分组为fans的名
         List<String> groups = new ArrayList<>();
         groups.add("fans");
