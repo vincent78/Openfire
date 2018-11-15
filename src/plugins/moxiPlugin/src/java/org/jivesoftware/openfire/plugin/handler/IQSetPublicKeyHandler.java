@@ -1,7 +1,6 @@
 package org.jivesoftware.openfire.plugin.handler;
 
 import org.dom4j.Element;
-import org.dom4j.tree.DefaultElement;
 import org.jivesoftware.openfire.IQHandlerInfo;
 import org.jivesoftware.openfire.PacketException;
 import org.jivesoftware.openfire.XMPPServer;
@@ -10,8 +9,6 @@ import org.jivesoftware.openfire.user.User;
 import org.jivesoftware.openfire.user.UserManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xmpp.packet.IQ;
-import org.xmpp.packet.JID;
 import org.xmpp.packet.Packet;
 
 public class IQSetPublicKeyHandler extends IQMoxiBaseHandler {
@@ -45,18 +42,7 @@ public class IQSetPublicKeyHandler extends IQMoxiBaseHandler {
             }
 
 
-
-            IQ reply = IQ.createResultIQ((IQ) packet);
-            reply.setTo((JID) null);
-            Element childElement = ((IQ) packet).getChildElement().createCopy();
-            Element resultElement = new DefaultElement("result");
-            resultElement.setText(result);
-            childElement.add(resultElement);
-            reply.setChildElement(childElement);
-            if (reply != null) {
-                // why is this done here instead of letting the iq handler do it?
-                session.process(reply);
-            }
+            replyMsg(packet,result);
         } catch (Exception e) {
             e.printStackTrace();
         }
