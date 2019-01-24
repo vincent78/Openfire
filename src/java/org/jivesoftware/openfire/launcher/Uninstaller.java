@@ -16,9 +16,7 @@
 
 package org.jivesoftware.openfire.launcher;
 
-import com.install4j.api.Context;
-import com.install4j.api.ProgressInterface;
-import com.install4j.api.UninstallAction;
+
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -27,33 +25,33 @@ import java.io.FilenameFilter;
  * Used with the Install4J installer to uninstall the remaining files within
  * the Openfire install.
  */
-public class Uninstaller extends UninstallAction {
-
-    @Override
-    public int getPercentOfTotalInstallation() {
-        return 0;
-    }
-
-    @Override
-    public boolean performAction(Context context, ProgressInterface progressInterface) {
-        final File installationDirectory = context.getInstallationDirectory();
-
-        File libDirectory = new File(installationDirectory, "lib");
-
-        // If the directory still exists, remove all JAR files.
-        if (libDirectory.exists() && libDirectory.isDirectory()) {
-            File[] jars = libDirectory.listFiles(new FilenameFilter() {
-                @Override
-                public boolean accept(File dir, String name) {
-                    return name.endsWith(".jar");
-                }
-            });
-            for (File jar : jars) {
-                jar.delete();
-            }
-        }
-
-        return super.performAction(context, progressInterface);
-    }
+public class Uninstaller  {
+//
+//    @Override
+//    public int getPercentOfTotalInstallation() {
+//        return 0;
+//    }
+//
+//    @Override
+//    public boolean performAction(Context context, ProgressInterface progressInterface) {
+//        final File installationDirectory = context.getInstallationDirectory();
+//
+//        File libDirectory = new File(installationDirectory, "lib");
+//
+//        // If the directory still exists, remove all JAR files.
+//        if (libDirectory.exists() && libDirectory.isDirectory()) {
+//            File[] jars = libDirectory.listFiles(new FilenameFilter() {
+//                @Override
+//                public boolean accept(File dir, String name) {
+//                    return name.endsWith(".jar");
+//                }
+//            });
+//            for (File jar : jars) {
+//                jar.delete();
+//            }
+//        }
+//
+//        return super.performAction(context, progressInterface);
+//    }
 
 }
